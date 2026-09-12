@@ -5,6 +5,7 @@
 
 package top.youzix.nekoedit.ui.about
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -43,6 +44,7 @@ fun LicensesScreen(
     LazyColumn(
         modifier = modifier.overScrollVertical(),
         contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item(key = "licenses") {
             Card(

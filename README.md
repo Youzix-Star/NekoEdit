@@ -23,20 +23,16 @@
 | 设置 | 主题模式（弹出式选择框，含 Monet 动态取色）、液态玻璃开关、字号、自动保存、统计卡片 |
 | 关于 | 大 logo 头部 + 获取源代码 / 开源许可 / 检查更新 + 开发者与反馈 |
 
-## 关于页的光晕
+## 预见式返回动画
 
-关于页背后那层缓慢流动的彩色光晕是从 InstallerX-Revived 移植过来的 AGSL runtime shader
-（`app/src/main/java/top/youzix/nekoedit/ui/effect/`，Apache-2.0）：
+用 `PredictiveBackHandler`（`androidx.activity.compose`）接住返回手势的实时进度：
 
-| 文件 | 作用 |
-| --- | --- |
-| `OS3BgFrag.kt` / `OS2BgFrag.kt` | 两套 HyperOS 风格的着色器源码：4 个彩色光点 + 噪声混合 |
-| `BgEffectPainter.kt` | 把 preset 写进 shader uniform，驱动动画时间与颜色轮换 |
-| `BgEffectModifier.kt` | 用 `drawWithCache` 把 shader 当画刷铺到背景上 |
-| `BgEffectConfig.kt` | 明暗 / 手机 / 平板各一套配色与动画参数 |
-| `BgEffectBackground.kt` | 对外的 `BgEffectBackground { }`，滚动时用 `alpha` 淡出 |
+- 手势拖动时页面**跟着手指缩放、漂移、淡出**，进度直接来自系统
+- 松手提交：先收缩到底，在收缩状态下切回「主页」页签，再展开
+- 中途取消：用弹簧动画回到原位
 
-minSdk 是 33，正好满足 runtime shader 的要求；设备不支持时会自动降级成普通背景。
+「关于 → 开源许可」这个子页面同理，提交时关闭子页面。清单里开了
+`android:enableOnBackInvokedCallback="true"`，否则系统只会给一次性的返回事件、拿不到进度。
 
 ## 液态玻璃悬浮底盘
 

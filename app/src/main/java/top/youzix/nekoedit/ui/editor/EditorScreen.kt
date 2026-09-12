@@ -51,16 +51,17 @@ fun EditorScreen(
     LazyColumn(
         modifier = modifier.overScrollVertical(),
         contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (draft == null) {
             item(key = "empty") {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
+                    // CardDefaults.InsideMargin is 0.dp, so this card pads its own content.
+                    insideMargin = PaddingValues(horizontal = 18.dp, vertical = 18.dp),
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -145,7 +146,10 @@ fun EditorScreen(
             if (showStatistics) {
                 item(key = "statistics") {
                     SmallTitle(text = "统计")
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        insideMargin = PaddingValues(horizontal = 18.dp, vertical = 14.dp),
+                    ) {
                         StatisticRow(label = "字符数（含空格）", value = draft.content.length.toString())
                         HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                         StatisticRow(label = "字数（不含空白）", value = draft.wordCount.toString())

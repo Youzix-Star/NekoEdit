@@ -92,6 +92,8 @@ private fun StatusSection(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
+            // CardDefaults.InsideMargin is 0.dp, so cards holding raw content must pad themselves.
+            insideMargin = PaddingValues(horizontal = 18.dp, vertical = 16.dp),
             colors = CardDefaults.defaultColors(
                 color = MiuixTheme.colorScheme.primaryContainer,
                 contentColor = MiuixTheme.colorScheme.onPrimaryContainer,
