@@ -1,2 +1,6 @@
-# NekoEdit keeps R8 disabled for the release build type, so this file only exists
-# as the conventional hook for rules if minification is turned on later.
+# miuix and Jetpack Compose are pure Kotlin/Compose code without reflection, so no
+# extra keep rules are required for them. The Compose runtime ships its own consumer
+# rules through the androidx artifacts.
+#
+# R8 is what strips the unused Material icons from material-icons-extended; without
+# it the release APK would carry several thousand unused ImageVector definitions.

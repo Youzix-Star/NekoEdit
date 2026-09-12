@@ -36,10 +36,10 @@ android {
 
     defaultConfig {
         applicationId = "top.youzix.nekoedit"
-        minSdk = 24
+        minSdk = 33
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -58,7 +58,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 also strips the thousands of unused Material icons pulled in by
+            // material-icons-extended, which is what keeps the release APK small.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
@@ -72,6 +79,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -85,7 +93,11 @@ dependencies {
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
 
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.material.icons)
+
     implementation(libs.miuix.ui)
     implementation(libs.miuix.preference)
-    implementation(libs.miuix.icons)
+    // The liquid-glass floating bottom bar is built on miuix-blur, which requires minSdk 33.
+    implementation(libs.miuix.blur)
 }
