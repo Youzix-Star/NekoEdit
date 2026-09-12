@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
@@ -36,15 +35,14 @@ private val licenses = listOf(
 
 @Composable
 fun LicensesScreen(
-    topPadding: Dp,
-    bottomPadding: Dp,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     val uriHandler = LocalUriHandler.current
 
     LazyColumn(
         modifier = modifier.overScrollVertical(),
-        contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding + 24.dp),
+        contentPadding = contentPadding,
     ) {
         item(key = "licenses") {
             Card(

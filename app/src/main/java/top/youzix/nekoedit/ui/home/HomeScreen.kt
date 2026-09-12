@@ -19,11 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.basic.Button
-import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.BasicComponent
 import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.HorizontalDivider
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.IconButton
@@ -31,6 +30,7 @@ import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.preference.ArrowPreference
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.youzix.nekoedit.data.Draft
 import top.youzix.nekoedit.ui.AppIcons
@@ -41,8 +41,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     drafts: List<Draft>,
-    topPadding: Dp,
-    bottomPadding: Dp,
+    contentPadding: PaddingValues,
     onOpenDraft: (Draft) -> Unit,
     onCreateDraft: () -> Unit,
     onDeleteDraft: (Draft) -> Unit,
@@ -50,34 +49,33 @@ fun HomeScreen(
 ) {
     LazyColumn(
         modifier = modifier.overScrollVertical(),
-        contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding + 24.dp),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(key = "overview") {
-            OverviewCard(
+        item(key = "status") {
+            StatusSection(
                 drafts = drafts,
                 onCreateDraft = onCreateDraft,
             )
         }
 
         item(key = "drafts") {
-            SmallTitle(text = "全部草稿")
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                if (drafts.isEmpty()) {
-                    EmptyDrafts(onCreateDraft = onCreateDraft)
-                } else {
-                    drafts.forEachIndexed { index, draft ->
-                        if (index > 0) {
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            Column {
+                SmallTitle(text = "全部草稿")
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    if (drafts.isEmpty()) {
+                        EmptyDrafts(onCreateDraft = onCreateDraft)
+                    } else {
+                        drafts.forEachIndexed { index, draft ->
+                            if (index > 0) {
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                            }
+                            DraftRow(
+                                draft = draft,
+                                onOpen = { onOpenDraft(draft) },
+                                onDelete = { onDeleteDraft(draft) },
+                            )
                         }
-                        DraftRow(
-                            draft = draft,
-                            onOpen = { onOpenDraft(draft) },
-                            onDelete = { onDeleteDraft(draft) },
-                        )
                     }
                 }
             }
@@ -85,69 +83,97 @@ fun HomeScreen(
     }
 }
 
+/** Big call-to-action card plus the numeric overview, mirroring the reference home screen. */
 @Composable
-private fun OverviewCard(
+private fun StatusSection(
     drafts: List<Draft>,
     onCreateDraft: () -> Unit,
 ) {
-    val totalWords = drafts.sumOf { it.wordCount }
-    val lastEdited = drafts.maxOfOrNull { it.updatedAt }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 12.dp),
-    ) {
-        Text(
-            text = "NekoEdit",
-            style = MiuixTheme.textStyles.title3,
-            color = MiuixTheme.colorScheme.onSurface,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = "把想法随手写下来的小编辑器",
-            style = MiuixTheme.textStyles.body2,
-            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            colors = CardDefaults.defaultColors(
+                color = MiuixTheme.colorScheme.primaryContainer,
+                contentColor = MiuixTheme.colorScheme.onPrimaryContainer,
+            ),
+            onClick = onCreateDraft,
+            showIndication = true,
+            pressFeedbackType = PressFeedbackType.Tilt,
         ) {
-            Statistic(label = "草稿", value = drafts.size.toString())
-            Statistic(label = "总字数", value = totalWords.toString())
-            Statistic(
-                label = "最近编辑",
-                value = lastEdited?.let { formatTimestamp(it) } ?: "—",
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "开始写作",
+                        style = MiuixTheme.textStyles.title3,
+                        color = MiuixTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "新建一条草稿，随手记下点什么",
+                        style = MiuixTheme.textStyles.footnote2,
+                        color = MiuixTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                    )
+                }
+                Spacer(modifier = Modifier.size(12.dp))
+                Icon(
+                    imageVector = AppIcons.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(26.dp),
+                    tint = MiuixTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            StatisticCard(
+                title = "草稿",
+                value = drafts.size.toString(),
+                modifier = Modifier.weight(1f),
+            )
+            StatisticCard(
+                title = "总字数",
+                value = drafts.sumOf { it.wordCount }.toString(),
+                modifier = Modifier.weight(1f),
+            )
+            StatisticCard(
+                title = "总行数",
+                value = drafts.sumOf { it.lineCount }.toString(),
+                modifier = Modifier.weight(1f),
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(
-            onClick = onCreateDraft,
-            colors = ButtonDefaults.buttonColorsPrimary(),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(imageVector = AppIcons.Add, contentDescription = null)
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(text = "新建草稿")
+        val latest = drafts.maxByOrNull { it.updatedAt }
+        if (latest != null) {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                BasicComponent(
+                    title = "最近编辑",
+                    summary = "${latest.displayTitle} · ${formatTimestamp(latest.updatedAt)}",
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun Statistic(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+private fun StatisticCard(
+    title: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        insideMargin = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+    ) {
         Text(
-            text = value,
-            style = MiuixTheme.textStyles.title3,
-            color = MiuixTheme.colorScheme.onSurface,
-        )
-        Text(
-            text = label,
+            text = title,
             style = MiuixTheme.textStyles.footnote2,
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            style = MiuixTheme.textStyles.title2,
+            color = MiuixTheme.colorScheme.onSurface,
         )
     }
 }
@@ -192,17 +218,11 @@ private fun EmptyDrafts(onCreateDraft: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = "点下面的按钮写第一条",
+            text = "点上面的「开始写作」写第一条",
             style = MiuixTheme.textStyles.footnote2,
             color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(onClick = onCreateDraft) {
-            Icon(imageVector = AppIcons.Add, contentDescription = null)
-            Spacer(modifier = Modifier.size(8.dp))
-            Text(text = "新建草稿")
-        }
     }
 }
 

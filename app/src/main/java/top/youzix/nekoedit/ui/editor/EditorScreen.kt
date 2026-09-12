@@ -19,7 +19,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import top.yukonga.miuix.kmp.basic.Button
@@ -42,8 +41,7 @@ fun EditorScreen(
     draft: Draft?,
     fontSize: Float,
     showStatistics: Boolean,
-    topPadding: Dp,
-    bottomPadding: Dp,
+    contentPadding: PaddingValues,
     onTitleChange: (String) -> Unit,
     onContentChange: (String) -> Unit,
     onCreateDraft: () -> Unit,
@@ -52,14 +50,12 @@ fun EditorScreen(
 ) {
     LazyColumn(
         modifier = modifier.overScrollVertical(),
-        contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding + 24.dp),
+        contentPadding = contentPadding,
     ) {
         if (draft == null) {
             item(key = "empty") {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Column(
                         modifier = Modifier
@@ -95,9 +91,7 @@ fun EditorScreen(
         } else {
             item(key = "title") {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextField(
                         value = draft.title,
@@ -112,9 +106,7 @@ fun EditorScreen(
 
             item(key = "content") {
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     TextField(
                         value = draft.content,
@@ -130,9 +122,7 @@ fun EditorScreen(
 
             item(key = "actions") {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     TextButton(
@@ -155,11 +145,7 @@ fun EditorScreen(
             if (showStatistics) {
                 item(key = "statistics") {
                     SmallTitle(text = "统计")
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                    ) {
+                    Card(modifier = Modifier.fillMaxWidth()) {
                         StatisticRow(label = "字符数（含空格）", value = draft.content.length.toString())
                         HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
                         StatisticRow(label = "字数（不含空白）", value = draft.wordCount.toString())

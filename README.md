@@ -18,10 +18,25 @@
 
 | 页签 | 内容 |
 | --- | --- |
-| 主页 | 概览卡片（草稿数 / 总字数 / 最近编辑）+ 卡片式草稿列表，可新建、打开、删除 |
+| 主页 | 可点击的「开始写作」大卡片 + 三张统计卡片 + 卡片式草稿列表，可新建、打开、删除 |
 | 编辑器 | 标题 + 正文输入，实时写入草稿；可选的统计卡片；FAB 保存 |
-| 设置 | 6 种主题模式（含 Monet 动态取色）、液态玻璃开关、字号、自动保存、统计卡片 |
+| 设置 | 主题模式（弹出式选择框，含 Monet 动态取色）、液态玻璃开关、字号、自动保存、统计卡片 |
 | 关于 | 大 logo 头部 + 获取源代码 / 开源许可 / 检查更新 + 开发者与反馈 |
+
+## 关于页的光晕
+
+关于页背后那层缓慢流动的彩色光晕是从 InstallerX-Revived 移植过来的 AGSL runtime shader
+（`app/src/main/java/top/youzix/nekoedit/ui/effect/`，Apache-2.0）：
+
+| 文件 | 作用 |
+| --- | --- |
+| `OS3BgFrag.kt` / `OS2BgFrag.kt` | 两套 HyperOS 风格的着色器源码：4 个彩色光点 + 噪声混合 |
+| `BgEffectPainter.kt` | 把 preset 写进 shader uniform，驱动动画时间与颜色轮换 |
+| `BgEffectModifier.kt` | 用 `drawWithCache` 把 shader 当画刷铺到背景上 |
+| `BgEffectConfig.kt` | 明暗 / 手机 / 平板各一套配色与动画参数 |
+| `BgEffectBackground.kt` | 对外的 `BgEffectBackground { }`，滚动时用 `alpha` 淡出 |
+
+minSdk 是 33，正好满足 runtime shader 的要求；设备不支持时会自动降级成普通背景。
 
 ## 液态玻璃悬浮底盘
 
@@ -46,6 +61,9 @@ release 构建开启了 R8，把没用到的一万多个图标裁掉（APK 从 4
 
 ## 目录结构
 
+页面统一从外壳拿到一份 `PaddingValues`（含 12.dp 横向留白），卡片自己不再加横向 padding，
+这与参照项目的做法一致。
+
 ```
 app/src/main/java/top/youzix/nekoedit/
 ├── MainActivity.kt              # 入口 Activity，开启 edge-to-edge
@@ -63,6 +81,7 @@ app/src/main/java/top/youzix/nekoedit/
     ├── about/LicensesScreen.kt  # 开源许可
     ├── update/UpdateChecker.kt  # GitHub Releases API
     ├── liquid/                  # 液态玻璃组件（移植自 miuix 示例）
+    ├── effect/                  # 关于页光晕（AGSL shader，移植自 InstallerX-Revived）
     └── animation/               # 动画辅助（移植自 miuix 示例）
 ```
 
@@ -102,7 +121,7 @@ KEY_PASSWORD=...
 ## 致谢
 
 - [miuix](https://github.com/compose-miuix-ui/miuix)（Apache-2.0）：组件与液态玻璃参考实现
-- [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived)（GPL-3.0）：界面结构与交互参考
+- [InstallerX-Revived](https://github.com/wxxsfxyzm/InstallerX-Revived)（GPL-3.0）：界面结构、关于页光晕与交互参考
 - [AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass)（Apache-2.0）：液态玻璃的原始实现
 
 ## 许可证

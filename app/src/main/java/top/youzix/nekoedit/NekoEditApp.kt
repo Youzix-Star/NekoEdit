@@ -7,8 +7,11 @@ package top.youzix.nekoedit
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -27,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.FloatingActionButton
@@ -204,8 +208,15 @@ private fun MainScreen(
         },
         snackbarHost = { SnackbarHost(state = snackbarHostState) },
     ) { innerPadding ->
-        val topPadding = innerPadding.calculateTopPadding()
-        val bottomPadding = innerPadding.calculateBottomPadding()
+        val layoutDirection = LocalLayoutDirection.current
+        // Horizontal padding lives on the list rather than on every card, which is how the
+        // reference app lays its pages out.
+        val pagePadding = PaddingValues(
+            start = innerPadding.calculateStartPadding(layoutDirection) + 12.dp,
+            top = innerPadding.calculateTopPadding() + 12.dp,
+            end = innerPadding.calculateEndPadding(layoutDirection) + 12.dp,
+            bottom = innerPadding.calculateBottomPadding() + 12.dp,
+        )
 
         // The page content is recorded into `backdrop`, so the floating bar can refract it.
         Box(
@@ -222,8 +233,7 @@ private fun MainScreen(
                 when (page) {
                     PAGE_HOME -> HomeScreen(
                         drafts = drafts,
-                        topPadding = topPadding,
-                        bottomPadding = bottomPadding,
+                        contentPadding = pagePadding,
                         onOpenDraft = { draft -> openDraft(draft.id) },
                         onCreateDraft = createDraft,
                         onDeleteDraft = { draft ->
@@ -237,8 +247,7 @@ private fun MainScreen(
                         draft = currentDraft,
                         fontSize = fontSize,
                         showStatistics = showStatistics,
-                        topPadding = topPadding,
-                        bottomPadding = bottomPadding,
+                        contentPadding = pagePadding,
                         onTitleChange = { title ->
                             currentDraft?.let { DraftStore.updateTitle(it.id, title) }
                         },
@@ -261,21 +270,18 @@ private fun MainScreen(
                         onAutoSaveChange = onAutoSaveChange,
                         showStatistics = showStatistics,
                         onShowStatisticsChange = onShowStatisticsChange,
-                        topPadding = topPadding,
-                        bottomPadding = bottomPadding,
+                        contentPadding = pagePadding,
                         modifier = Modifier.fillMaxSize(),
                     )
 
                     else -> if (showLicenses) {
                         LicensesScreen(
-                            topPadding = topPadding,
-                            bottomPadding = bottomPadding,
+                            contentPadding = pagePadding,
                             modifier = Modifier.fillMaxSize(),
                         )
                     } else {
                         AboutScreen(
-                            topPadding = topPadding,
-                            bottomPadding = bottomPadding,
+                            contentPadding = pagePadding,
                             onOpenLicenses = { showLicenses = true },
                             modifier = Modifier.fillMaxSize(),
                         )

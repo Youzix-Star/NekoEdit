@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
@@ -43,12 +45,16 @@ import top.yukonga.miuix.kmp.utils.overScrollVertical
 import top.youzix.nekoedit.BuildConfig
 import top.youzix.nekoedit.R
 import top.youzix.nekoedit.ui.AppIcons
+import top.youzix.nekoedit.ui.effect.BgEffectBackground
 import top.youzix.nekoedit.ui.update.ReleaseInfo
 import top.youzix.nekoedit.ui.update.UpdateChecker
 
 private const val REPOSITORY_URL = "https://github.com/Youzix-Star/NekoEdit"
 private const val DEVELOPER_URL = "https://github.com/Youzix-Star"
 private const val FEEDBACK_EMAIL = "youzix.star@gmail.com"
+
+/** How far the header scrolls before the glow has faded out completely. */
+private const val GLOW_FADE_DISTANCE = 320f
 
 private sealed interface UpdateState {
     data class Available(val info: ReleaseInfo) : UpdateState
@@ -58,8 +64,7 @@ private sealed interface UpdateState {
 
 @Composable
 fun AboutScreen(
-    topPadding: Dp,
-    bottomPadding: Dp,
+    contentPadding: PaddingValues,
     onOpenLicenses: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -88,105 +93,122 @@ fun AboutScreen(
         }
     }
 
-    LazyColumn(
-        modifier = modifier.overScrollVertical(),
-        contentPadding = PaddingValues(top = topPadding, bottom = bottomPadding + 24.dp),
+    val listState = rememberLazyListState()
+    // The glow lives behind the header and fades away as the header scrolls off.
+    val glowAlpha by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) {
+                0f
+            } else {
+                (1f - listState.firstVisibleItemScrollOffset / GLOW_FADE_DISTANCE).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    BgEffectBackground(
+        dynamicBackground = true,
+        modifier = modifier.fillMaxSize(),
+        alpha = { glowAlpha },
     ) {
-        item(key = "header") {
-            AppHeader()
-        }
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .overScrollVertical(),
+            contentPadding = contentPadding,
+        ) {
+            item(key = "header") {
+                AppHeader()
+            }
 
-        item(key = "about") {
-            SmallTitle(text = "关于")
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                ArrowPreference(
-                    title = "获取源代码",
-                    summary = "在 GitHub 上查看 NekoEdit 的源码",
-                    startAction = {
-                        Icon(
-                            imageVector = AppIcons.SourceCode,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
+            item(key = "about") {
+                Column {
+                    SmallTitle(text = "关于")
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        ArrowPreference(
+                            title = "获取源代码",
+                            summary = "在 GitHub 上查看 NekoEdit 的源码",
+                            startAction = {
+                                Icon(
+                                    imageVector = AppIcons.SourceCode,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            onClick = { uriHandler.openUri(REPOSITORY_URL) },
                         )
-                    },
-                    onClick = { uriHandler.openUri(REPOSITORY_URL) },
-                )
-                ArrowPreference(
-                    title = "开源许可",
-                    summary = "miuix、Compose、Material Icons 等依赖的许可证",
-                    startAction = {
-                        Icon(
-                            imageVector = AppIcons.License,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
+                        ArrowPreference(
+                            title = "开源许可",
+                            summary = "miuix、Compose、Material Icons 等依赖的许可证",
+                            startAction = {
+                                Icon(
+                                    imageVector = AppIcons.License,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            onClick = onOpenLicenses,
                         )
-                    },
-                    onClick = onOpenLicenses,
-                )
-                ArrowPreference(
-                    title = if (checkingUpdate) "正在检查更新…" else "检查更新",
-                    summary = "从 GitHub Releases 获取最新版本",
-                    startAction = {
-                        Icon(
-                            imageVector = if (checkingUpdate) AppIcons.Refresh else AppIcons.Update,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
+                        ArrowPreference(
+                            title = if (checkingUpdate) "正在检查更新…" else "检查更新",
+                            summary = "从 GitHub Releases 获取最新版本",
+                            startAction = {
+                                Icon(
+                                    imageVector = if (checkingUpdate) AppIcons.Refresh else AppIcons.Update,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            enabled = !checkingUpdate,
+                            onClick = { checkForUpdates() },
                         )
-                    },
-                    enabled = !checkingUpdate,
-                    onClick = { checkForUpdates() },
+                    }
+                }
+            }
+
+            item(key = "developer") {
+                Column {
+                    SmallTitle(text = "开发者")
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        ArrowPreference(
+                            title = "Youzix-Star",
+                            summary = "github.com/Youzix-Star",
+                            startAction = {
+                                Icon(
+                                    imageVector = AppIcons.Developer,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            onClick = { uriHandler.openUri(DEVELOPER_URL) },
+                        )
+                        ArrowPreference(
+                            title = "反馈与建议",
+                            summary = FEEDBACK_EMAIL,
+                            startAction = {
+                                Icon(
+                                    imageVector = AppIcons.Feedback,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                )
+                            },
+                            onClick = { uriHandler.openUri("mailto:$FEEDBACK_EMAIL") },
+                        )
+                    }
+                }
+            }
+
+            item(key = "footer") {
+                Text(
+                    text = "NekoEdit 基于 miuix 构建，仅用于演示组件用法。",
+                    style = MiuixTheme.textStyles.footnote2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 20.dp),
                 )
             }
-        }
-
-        item(key = "developer") {
-            SmallTitle(text = "开发者")
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp),
-            ) {
-                ArrowPreference(
-                    title = "Youzix-Star",
-                    summary = "github.com/Youzix-Star",
-                    startAction = {
-                        Icon(
-                            imageVector = AppIcons.Developer,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    },
-                    onClick = { uriHandler.openUri(DEVELOPER_URL) },
-                )
-                ArrowPreference(
-                    title = "反馈与建议",
-                    summary = FEEDBACK_EMAIL,
-                    startAction = {
-                        Icon(
-                            imageVector = AppIcons.Feedback,
-                            contentDescription = null,
-                            modifier = Modifier.size(22.dp),
-                        )
-                    },
-                    onClick = { uriHandler.openUri("mailto:$FEEDBACK_EMAIL") },
-                )
-            }
-        }
-
-        item(key = "footer") {
-            Text(
-                text = "NekoEdit 基于 miuix 构建，仅用于演示组件用法。",
-                style = MiuixTheme.textStyles.footnote2,
-                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-            )
         }
     }
 
@@ -235,15 +257,15 @@ private fun AppHeader() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 20.dp, bottom = 20.dp),
+            .padding(top = 36.dp, bottom = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Image(
             painter = painterResource(R.drawable.ic_launcher),
             contentDescription = null,
-            modifier = Modifier.size(88.dp),
+            modifier = Modifier.size(96.dp),
         )
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(14.dp))
         Text(
             text = "NekoEdit",
             style = MiuixTheme.textStyles.title1,
